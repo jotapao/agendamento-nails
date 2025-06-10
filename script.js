@@ -33,3 +33,36 @@
         const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
         const monthFilter = document.getElementById('month-filter');
 
+         // --- INITIALIZATION FUNCTION ---
+        async function initialize() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                setLogLevel('debug');
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        const collectionPath = `artifacts/${appId}/users/${userId}/appointments`;
+                        appointmentsCollection = collection(db, collectionPath);
+                        userIdDisplay.textContent = userId;
+                        userInfoDiv.classList.remove('hidden');
+                        isAuthReady = true;
+                        await listenForAppointments();
+                    } else {
+                        isAuthReady = false;
+                        if(unsubscribeAppointments) unsubscribeAppointments();
+                    }
+                });
+
+                if (initialAuthToken) { await signInWithCustomToken(auth, initialAuthToken); } 
+                else { await signInAnonymously(auth); }
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                loadingState.textContent = 'Erro ao conectar com o banco de dados.';
+            }
+        }
+
+
