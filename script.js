@@ -125,3 +125,29 @@
         }
 
 
+        
+        // --- UI RENDERING & EVENT LISTENERS ---
+
+        function filterAndRender() {
+            let filteredAppointments = allAppointments;
+
+            if (selectedFilter !== 'all') {
+                filteredAppointments = allAppointments.filter(appt => {
+                    const apptDate = new Date(appt.dateTime);
+                    const apptMonthYear = `${apptDate.getFullYear()}-${String(apptDate.getMonth() + 1).padStart(2, '0')}`;
+                    return apptMonthYear === selectedFilter;
+                });
+            }
+
+            renderAppointments(filteredAppointments);
+            updateSummary(filteredAppointments);
+        }
+
+        function populateMonthFilter() {
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const uniqueMonths = [...new Set(allAppointments.map(appt => {
+                const date = new Date(appt.dateTime);
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            }))];
+
+
