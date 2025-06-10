@@ -257,4 +257,7 @@
             hideDeleteModal();
         });
 
+         // --- START THE APP ---
+        initialize();
+
 
