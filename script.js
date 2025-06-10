@@ -1,5 +1,5 @@
 
-        document.addEventListener('DOMContentLoaded', () => {
+               document.addEventListener('DOMContentLoaded', () => {
             // --- LOGIN ELEMENTS ---
             const loginPage = document.getElementById('login-page');
             const appPage = document.getElementById('app-page');
@@ -35,8 +35,7 @@
             const totalPaidEl = document.getElementById('total-paid');
             const totalUnpaidEl = document.getElementById('total-unpaid');
             const periodExpensesEl = document.getElementById('period-expenses');
-            const dailyBalanceEl = document.getElementById('daily-balance');
-
+            
             // Filters
             const filterButtons = document.querySelectorAll('.filter-btn');
             const filterInputs = document.getElementById('filter-inputs');
@@ -103,7 +102,6 @@
                 allExpenses = getExpenses();
                 populateMonthFilter();
                 filterAndRender();
-                updateDailySummary();
             }
 
             // --- EVENT LISTENERS ---
@@ -285,16 +283,6 @@
                 periodExpensesEl.textContent = expensesTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
             }
 
-            function updateDailySummary() {
-                const today = new Date().toISOString().split('T')[0];
-                const dailyIncome = allAppointments.filter(a => a.isPaid && a.dateTime.startsWith(today)).reduce((sum, a) => sum + a.value, 0);
-                const dailyExpenses = allExpenses.filter(e => e.date === today).reduce((sum, e) => sum + e.value, 0);
-                const balance = dailyIncome - dailyExpenses;
-                dailyBalanceEl.textContent = balance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                dailyBalanceEl.classList.toggle('text-red-600', balance < 0);
-                dailyBalanceEl.classList.toggle('text-green-600', balance >= 0);
-            }
-            
             // --- HELPERS & MODAL ---
             function getWeekDateRange(weekString) {
                 const [year, weekNum] = weekString.split('-W').map(Number);
@@ -348,5 +336,3 @@
                 hideDeleteModal();
             });
         });
-    
-
