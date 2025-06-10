@@ -1,13 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamento - Nails</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Agendamentos Nail Designer</title>
+    <!-- Carrega o Tailwind CSS (essencial para o design) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carrega a fonte Inter do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Carrega os ícones do Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" xintegrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- CSS Personalizado -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fce7f3; /* Fundo rosa claro */
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #db2777; /* Cor rosa (Tailwind pink-600) */
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #be185d; /* Cor rosa mais escura (Tailwind pink-700) */
+        }
+        .btn-secondary {
+            background-color: #9333ea; /* Cor roxa (Tailwind purple-600) */
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #7e22ce; /* Cor roxa mais escura (Tailwind purple-700) */
+        }
+        .btn-danger {
+            background-color: #dc2626; /* Cor vermelha (Tailwind red-600) */
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c; /* Cor vermelha mais escura (Tailwind red-700) */
+        }
+        .paid-card {
+             background-color: #f0fdf4; /* Fundo verde claro (Tailwind green-50) */
+             border-left: 5px solid #22c55e; /* Borda esquerda verde (Tailwind green-500) */
+        }
+        .unpaid-card {
+            border-left: 5px solid #f97316; /* Borda esquerda laranja (Tailwind orange-500) */
+        }
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            filter: invert(50%) sepia(50%) saturate(500%) hue-rotate(280deg);
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-container {
+            transition: transform 0.3s ease;
+        }
+    </style>
 </head>
-<body>
-       <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+<body class="antialiased text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
 
         <!-- Header -->
         <header class="text-center mb-8">
@@ -98,6 +162,220 @@
             </div>
         </div>
     </div>
+
+    <!-- Lógica do App com LocalStorage -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- GLOBAL STATE ---
+            let appointmentIdToDelete = null;
+            let allAppointments = [];
+            let selectedFilter = 'all';
+
+            // --- DOM ELEMENTS ---
+            const form = document.getElementById('add-appointment-form');
+            const appointmentsList = document.getElementById('appointments-list');
+            const emptyState = document.getElementById('empty-state');
+            const totalPaidEl = document.getElementById('total-paid');
+            const totalUnpaidEl = document.getElementById('total-unpaid');
+            const valueInput = document.getElementById('value');
+            const deleteModal = document.getElementById('delete-modal');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+            const monthFilter = document.getElementById('month-filter');
+
+            // --- DATA HANDLING FUNCTIONS (USING LOCALSTORAGE) ---
+            function getAppointments() {
+                const appointmentsJSON = localStorage.getItem('nailAppointments');
+                // Adiciona ordenação aqui
+                const appointments = appointmentsJSON ? JSON.parse(appointmentsJSON) : [];
+                return appointments.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+            }
+
+            function saveAppointments(appointments) {
+                localStorage.setItem('nailAppointments', JSON.stringify(appointments));
+            }
+
+            function loadInitialData() {
+                allAppointments = getAppointments();
+                populateMonthFilter();
+                filterAndRender();
+            }
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const clientName = document.getElementById('client-name').value.trim();
+                const service = document.getElementById('service').value.trim();
+                const rawValue = valueInput.value;
+                const dateTime = document.getElementById('date-time').value;
+                const value = parseFloat(rawValue.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
+
+                if (clientName && service && !isNaN(value) && dateTime) {
+                    const newAppointment = {
+                        id: crypto.randomUUID(), // Gera um ID único
+                        clientName,
+                        service,
+                        value,
+                        dateTime,
+                        isPaid: false,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    const updatedAppointments = [newAppointment, ...getAppointments()];
+                    saveAppointments(updatedAppointments);
+                    
+                    form.reset();
+                    valueInput.value = '';
+                    loadInitialData(); // Recarrega a lista
+                }
+            });
+
+            function markAsPaid(id) {
+                const appointments = getAppointments();
+                const appointmentIndex = appointments.findIndex(a => a.id === id);
+                if (appointmentIndex > -1) {
+                    appointments[appointmentIndex].isPaid = true;
+                    saveAppointments(appointments);
+                    loadInitialData();
+                }
+            }
+
+            function deleteAppointment(id) {
+                let appointments = getAppointments();
+                appointments = appointments.filter(a => a.id !== id);
+                saveAppointments(appointments);
+                loadInitialData();
+            }
+
+            // --- UI RENDERING & EVENT LISTENERS ---
+            function filterAndRender() {
+                let filteredAppointments = allAppointments;
+                if (selectedFilter !== 'all') {
+                    filteredAppointments = allAppointments.filter(appt => {
+                        const apptDate = new Date(appt.dateTime);
+                        const apptMonthYear = `${apptDate.getFullYear()}-${String(apptDate.getMonth() + 1).padStart(2, '0')}`;
+                        return apptMonthYear === selectedFilter;
+                    });
+                }
+                renderAppointments(filteredAppointments);
+                updateSummary(filteredAppointments);
+            }
+
+            function populateMonthFilter() {
+                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                const uniqueMonths = [...new Set(allAppointments.map(appt => {
+                    const date = new Date(appt.dateTime);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }))];
+
+                monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
+                uniqueMonths.forEach(monthYear => {
+                    const [year, month] = monthYear.split('-');
+                    const option = document.createElement('option');
+                    option.value = monthYear;
+                    option.textContent = `${monthNames[parseInt(month) - 1]} de ${year}`;
+                    monthFilter.appendChild(option);
+                });
+                monthFilter.value = selectedFilter;
+            }
+
+            function renderAppointments(appointments) {
+                appointmentsList.innerHTML = '';
+                if (appointments.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+                appointments.forEach(appt => {
+                    const card = createAppointmentCard(appt);
+                    appointmentsList.appendChild(card);
+                });
+            }
+
+            function createAppointmentCard(appt) {
+                const card = document.createElement('div');
+                card.className = `card p-5 ${appt.isPaid ? 'paid-card' : 'unpaid-card'}`;
+                const formattedDate = new Date(appt.dateTime).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                const formattedValue = appt.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                card.innerHTML = `
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div class="flex-1 mb-4 md:mb-0">
+                            <p class="font-bold text-lg text-pink-700">${appt.clientName}</p>
+                            <p class="text-gray-600">${appt.service}</p>
+                            <div class="flex items-center text-sm text-gray-500 mt-2">
+                                <i class="fas fa-calendar-alt mr-2"></i><span>${formattedDate}</span>
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-money-bill-wave mr-2"></i><span>${formattedValue}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            ${!appt.isPaid ? `<button data-id="${appt.id}" class="btn-secondary font-semibold py-2 px-4 rounded-lg flex-1 md:flex-none mark-paid-btn"><i class="fas fa-check mr-2"></i>Marcar Pago</button>` : `<span class="font-bold text-green-600 text-center flex-1"><i class="fas fa-check-circle mr-2"></i>Pago</span>`}
+                            <button data-id="${appt.id}" class="text-red-500 hover:text-red-700 py-2 px-4 rounded-lg delete-btn"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+                
+                const markPaidBtn = card.querySelector('.mark-paid-btn');
+                if (markPaidBtn) markPaidBtn.addEventListener('click', () => markAsPaid(appt.id));
+                
+                const deleteBtn = card.querySelector('.delete-btn');
+                if (deleteBtn) deleteBtn.addEventListener('click', () => showDeleteModal(appt.id));
+                
+                return card;
+            }
+
+            function updateSummary(appointments) {
+                const paidTotal = appointments.filter(a => a.isPaid).reduce((sum, a) => sum + a.value, 0);
+                const unpaidTotal = appointments.filter(a => !a.isPaid).reduce((sum, a) => sum + a.value, 0);
+                totalPaidEl.textContent = paidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                totalUnpaidEl.textContent = unpaidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            }
+            
+            valueInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value === '') { e.target.value = ''; return; }
+                value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                e.target.value = 'R$ ' + value;
+            });
+
+            monthFilter.addEventListener('change', (e) => {
+                selectedFilter = e.target.value;
+                filterAndRender();
+            });
+
+            function showDeleteModal(id) {
+                appointmentIdToDelete = id;
+                deleteModal.classList.remove('hidden');
+                setTimeout(() => {
+                    deleteModal.classList.remove('opacity-0');
+                    deleteModal.querySelector('.modal-container').classList.remove('scale-95');
+                }, 10);
+            }
+
+            function hideDeleteModal() {
+                deleteModal.querySelector('.modal-container').classList.add('scale-95');
+                deleteModal.classList.add('opacity-0');
+                setTimeout(() => {
+                    deleteModal.classList.add('hidden');
+                    appointmentIdToDelete = null;
+                }, 300);
+            }
+
+            cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+            
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (appointmentIdToDelete) deleteAppointment(appointmentIdToDelete);
+                hideDeleteModal();
+            });
+
+            // --- START THE APP ---
+            loadInitialData();
+        });
+    </script>
+
+
+   
+    
 </body>
-<script src="script.js"></script>
 </html>
