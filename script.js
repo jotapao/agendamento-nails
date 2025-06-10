@@ -231,4 +231,30 @@
             filterAndRender();
         });
 
+         // --- DELETE MODAL LOGIC ---
+        function showDeleteModal(id) {
+            appointmentIdToDelete = id;
+            deleteModal.classList.remove('hidden');
+            setTimeout(() => {
+                deleteModal.classList.remove('opacity-0');
+                deleteModal.querySelector('.modal-container').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function hideDeleteModal() {
+            deleteModal.querySelector('.modal-container').classList.add('scale-95');
+            deleteModal.classList.add('opacity-0');
+            setTimeout(() => {
+                deleteModal.classList.add('hidden');
+                appointmentIdToDelete = null;
+            }, 300);
+        }
+
+        cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+        
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (appointmentIdToDelete) await deleteAppointment(appointmentIdToDelete);
+            hideDeleteModal();
+        });
+
 
