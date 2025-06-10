@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento - Nails</title>
+</head>
+<body>
+       <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-pink-600">Meu Estúdio</h1>
+            <p class="text-gray-600 mt-2">Seu gerenciador de agendamentos e finanças</p>
+        </header>
+        
+        <!-- User ID Display -->
+        <div id="user-info" class="text-center mb-6 p-2 bg-pink-100 rounded-lg hidden">
+            <p class="text-sm text-pink-800">Seu ID de usuário (compartilhe se necessário): <strong id="userIdDisplay" class="font-mono"></strong></p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="card p-6 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Arrecadado (Mês)</p>
+                    <p id="total-paid" class="text-3xl font-bold text-green-600">R$ 0,00</p>
+                </div>
+                 <i class="fas fa-sack-dollar fa-2x text-green-500"></i>
+            </div>
+            <div class="card p-6 flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Total Pendente (Mês)</p>
+                    <p id="total-unpaid" class="text-3xl font-bold text-orange-500">R$ 0,00</p>
+                </div>
+                 <i class="fas fa-hand-holding-dollar fa-2x text-orange-400"></i>
+            </div>
+        </div>
+
+        <!-- Add Appointment Form -->
+        <div class="card p-6 md:p-8 mb-8">
+            <h2 class="text-2xl font-bold mb-6 text-gray-700">Novo Agendamento</h2>
+            <form id="add-appointment-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label for="client-name" class="block text-sm font-medium text-gray-600 mb-1">Nome da Cliente</label>
+                    <input type="text" id="client-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Maria da Silva" required>
+                </div>
+                <div>
+                    <label for="service" class="block text-sm font-medium text-gray-600 mb-1">Serviço</label>
+                    <input type="text" id="service" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Manicure e Pedicure" required>
+                </div>
+                <div>
+                    <label for="value" class="block text-sm font-medium text-gray-600 mb-1">Valor (R$)</label>
+                    <input type="text" inputmode="decimal" id="value" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="R$ 0,00" required>
+                </div>
+                <div class="md:col-span-2">
+                    <label for="date-time" class="block text-sm font-medium text-gray-600 mb-1">Data e Hora</label>
+                    <input type="datetime-local" id="date-time" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" required>
+                </div>
+                <div class="md:col-span-2 text-right">
+                    <button type="submit" class="btn-primary font-bold py-3 px-6 rounded-lg shadow-md">
+                        <i class="fas fa-plus mr-2"></i>Adicionar
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Appointments List -->
+        <div>
+            <div class="flex justify-between items-center mb-6">
+                 <h2 class="text-2xl font-bold text-gray-700">Meus Agendamentos</h2>
+                 <div>
+                    <label for="month-filter" class="sr-only">Filtrar por Mês</label>
+                    <select id="month-filter" class="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
+                        <option value="all">Todos os Meses</option>
+                    </select>
+                 </div>
+            </div>
+           
+            <div id="appointments-list" class="space-y-4">
+                <!-- Loading state -->
+                <p id="loading-state" class="text-center text-gray-500 py-8">Carregando agendamentos...</p>
+                <!-- Empty state -->
+                <p id="empty-state" class="text-center text-gray-500 py-8 hidden">Nenhum agendamento encontrado.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden opacity-0">
+        <div class="modal-container bg-white w-full max-w-md p-6 rounded-xl shadow-lg transform scale-95">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Confirmar Exclusão</h3>
+            <p class="text-gray-600 mb-6">Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancel-delete-btn" class="py-2 px-5 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold">Cancelar</button>
+                <button id="confirm-delete-btn" class="btn-danger py-2 px-5 rounded-lg font-semibold">Excluir</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
