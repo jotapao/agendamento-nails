@@ -150,4 +150,79 @@
                 return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             }))];
 
+             // Clear existing options but keep the "Todos"
+            monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
+
+            uniqueMonths.forEach(monthYear => {
+                const [year, month] = monthYear.split('-');
+                const option = document.createElement('option');
+                option.value = monthYear;
+                option.textContent = `${monthNames[parseInt(month) - 1]} de ${year}`;
+                monthFilter.appendChild(option);
+            });
+            
+            monthFilter.value = selectedFilter;
+        }
+
+        function renderAppointments(appointments) {
+            appointmentsList.innerHTML = '';
+            if (appointments.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+            appointments.forEach(appt => {
+                const card = createAppointmentCard(appt);
+                appointmentsList.appendChild(card);
+            });
+        }
+
+        function createAppointmentCard(appt) {
+            const card = document.createElement('div');
+            card.className = `card p-5 ${appt.isPaid ? 'paid-card' : 'unpaid-card'}`;
+            const formattedDate = new Date(appt.dateTime).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            const formattedValue = appt.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            card.innerHTML = `
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div class="flex-1 mb-4 md:mb-0">
+                        <p class="font-bold text-lg text-pink-700">${appt.clientName}</p>
+                        <p class="text-gray-600">${appt.service}</p>
+                        <div class="flex items-center text-sm text-gray-500 mt-2">
+                            <i class="fas fa-calendar-alt mr-2"></i><span>${formattedDate}</span>
+                            <span class="mx-2">|</span>
+                            <i class="fas fa-money-bill-wave mr-2"></i><span>${formattedValue}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 w-full md:w-auto">
+                        ${!appt.isPaid ? `<button class="btn-secondary font-semibold py-2 px-4 rounded-lg flex-1 md:flex-none mark-paid-btn"><i class="fas fa-check mr-2"></i>Marcar Pago</button>` : `<span class="font-bold text-green-600 text-center flex-1"><i class="fas fa-check-circle mr-2"></i>Pago</span>`}
+                        <button class="text-red-500 hover:text-red-700 py-2 px-4 rounded-lg delete-btn"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `;
+            
+            const markPaidBtn = card.querySelector('.mark-paid-btn');
+            if (markPaidBtn) markPaidBtn.addEventListener('click', () => markAsPaid(appt.id));
+            
+            const deleteBtn = card.querySelector('.delete-btn');
+            if (deleteBtn) deleteBtn.addEventListener('click', () => showDeleteModal(appt.id));
+            
+            return card;
+        }
+
+        function updateSummary(appointments) {
+            const paidTotal = appointments.filter(a => a.isPaid).reduce((sum, a) => sum + a.value, 0);
+            const unpaidTotal = appointments.filter(a => !a.isPaid).reduce((sum, a) => sum + a.value, 0);
+            totalPaidEl.textContent = paidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            totalUnpaidEl.textContent = unpaidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // --- INPUT FORMATTING ---
+        valueInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value === '') { e.target.value = ''; return; }
+            value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+            e.target.value = 'R$ ' + value;
+        });
+
 
