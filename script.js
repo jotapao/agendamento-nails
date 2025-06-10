@@ -225,4 +225,10 @@
             e.target.value = 'R$ ' + value;
         });
 
+        // --- FILTER EVENT LISTENER ---
+        monthFilter.addEventListener('change', (e) => {
+            selectedFilter = e.target.value;
+            filterAndRender();
+        });
+
 
