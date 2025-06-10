@@ -60,7 +60,10 @@
         .unpaid-card {
             border-left: 5px solid #f97316;
         }
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="week"]::-webkit-calendar-picker-indicator,
+        input[type="month"]::-webkit-calendar-picker-indicator {
             cursor: pointer;
             filter: invert(50%) sepia(50%) saturate(500%) hue-rotate(280deg);
         }
@@ -69,6 +72,11 @@
         }
         .modal-container {
             transition: transform 0.3s ease;
+        }
+        .filter-btn.active {
+            background-color: #db2777;
+            color: white;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -97,7 +105,7 @@
     
     <!-- Main App Page (hidden by default) -->
     <div id="app-page" class="hidden">
-        <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-7xl">
 
             <!-- Header -->
             <header class="text-center mb-8">
@@ -106,67 +114,136 @@
             </header>
 
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="card p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500">Total Arrecadado (Mês)</p>
+                        <p class="text-sm text-gray-500">Arrecadado (Período)</p>
                         <p id="total-paid" class="text-2xl sm:text-3xl font-bold text-green-600">R$ 0,00</p>
                     </div>
                      <i class="fas fa-sack-dollar fa-2x text-green-500"></i>
                 </div>
                 <div class="card p-6 flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-500">Total Pendente (Mês)</p>
+                        <p class="text-sm text-gray-500">Pendente (Período)</p>
                         <p id="total-unpaid" class="text-2xl sm:text-3xl font-bold text-orange-500">R$ 0,00</p>
                     </div>
                      <i class="fas fa-hand-holding-dollar fa-2x text-orange-400"></i>
                 </div>
+                <div class="card p-6 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Gastos (Período)</p>
+                        <p id="period-expenses" class="text-2xl sm:text-3xl font-bold text-red-600">R$ 0,00</p>
+                    </div>
+                     <i class="fas fa-money-bill-transfer fa-2x text-red-500"></i>
+                </div>
+                <div class="card p-6 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Saldo do Dia</p>
+                        <p id="daily-balance" class="text-2xl sm:text-3xl font-bold text-blue-600">R$ 0,00</p>
+                    </div>
+                     <i class="fas fa-chart-line fa-2x text-blue-500"></i>
+                </div>
             </div>
-
-            <!-- Add Appointment Form -->
-            <div class="card p-6 md:p-8 mb-8">
-                <h2 class="text-2xl font-bold mb-6 text-gray-700">Novo Agendamento</h2>
-                <form id="add-appointment-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2">
-                        <label for="client-name" class="block text-sm font-medium text-gray-600 mb-1">Nome da Cliente</label>
-                        <input type="text" id="client-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Maria da Silva" required>
+            
+            <!-- Filter Section -->
+            <div class="card p-4 mb-8">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex-shrink-0 font-semibold">Filtrar por:</div>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="filter-btn active px-4 py-2 rounded-lg text-sm" data-filter="all">Tudo</button>
+                        <button class="filter-btn px-4 py-2 rounded-lg text-sm" data-filter="day">Dia</button>
+                        <button class="filter-btn px-4 py-2 rounded-lg text-sm" data-filter="week">Semana</button>
+                        <button class="filter-btn px-4 py-2 rounded-lg text-sm" data-filter="month">Mês</button>
+                        <button class="filter-btn px-4 py-2 rounded-lg text-sm" data-filter="period">Período</button>
+                    </div>
+                </div>
+                <div id="filter-inputs" class="mt-4">
+                    <div id="day-filter-input" class="hidden">
+                        <input type="date" id="day-input" class="p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div id="week-filter-input" class="hidden">
+                        <input type="week" id="week-input" class="p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div id="month-filter-input" class="hidden">
+                        <select id="month-select" class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg"></select>
+                    </div>
+                    <div id="period-filter-input" class="hidden flex flex-wrap gap-4 items-center">
+                        <input type="date" id="start-date-input" class="p-2 border border-gray-300 rounded-lg">
+                        <span>até</span>
+                        <input type="date" id="end-date-input" class="p-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
+                <!-- Appointments Section -->
+                <section id="appointments-section">
+                    <div class="card p-6 md:p-8 mb-8">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-700">Novo Agendamento</h2>
+                        <form id="add-appointment-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label for="client-name" class="block text-sm font-medium text-gray-600 mb-1">Nome da Cliente</label>
+                                <input type="text" id="client-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Maria da Silva" required>
+                            </div>
+                            <div>
+                                <label for="service" class="block text-sm font-medium text-gray-600 mb-1">Serviço</label>
+                                <input type="text" id="service" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Manicure e Pedicure" required>
+                            </div>
+                            <div>
+                                <label for="value" class="block text-sm font-medium text-gray-600 mb-1">Valor (R$)</label>
+                                <input type="text" inputmode="decimal" id="value" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="R$ 0,00" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="date-time" class="block text-sm font-medium text-gray-600 mb-1">Data e Hora</label>
+                                <input type="datetime-local" id="date-time" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" required>
+                            </div>
+                            <div class="md:col-span-2 text-right">
+                                <button type="submit" class="btn-primary font-bold w-full md:w-auto py-3 px-6 rounded-lg shadow-md">
+                                    <i class="fas fa-plus mr-2"></i>Adicionar Agendamento
+                                </button>
+                            </div>
+                        </form>
                     </div>
                     <div>
-                        <label for="service" class="block text-sm font-medium text-gray-600 mb-1">Serviço</label>
-                        <input type="text" id="service" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Manicure e Pedicure" required>
+                         <h2 class="text-2xl font-bold text-gray-700 mb-6">Meus Agendamentos</h2>
+                        <div id="appointments-list" class="space-y-4">
+                            <p id="empty-appointments" class="text-center text-gray-500 py-8 hidden">Nenhum agendamento encontrado.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Expenses Section -->
+                <section id="expenses-section">
+                     <div class="card p-6 md:p-8 mb-8 mt-8 lg:mt-0">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-700">Adicionar Gasto</h2>
+                        <form id="add-expense-form" class="grid grid-cols-1 gap-4">
+                             <div>
+                                <label for="expense-description" class="block text-sm font-medium text-gray-600 mb-1">Descrição do Gasto</label>
+                                <input type="text" id="expense-description" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Material de reposição" required>
+                            </div>
+                            <div>
+                                <label for="expense-value" class="block text-sm font-medium text-gray-600 mb-1">Valor do Gasto (R$)</label>
+                                <input type="text" inputmode="decimal" id="expense-value" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="R$ 0,00" required>
+                            </div>
+                            <div>
+                                <label for="expense-date" class="block text-sm font-medium text-gray-600 mb-1">Data do Gasto</label>
+                                <input type="date" id="expense-date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" required>
+                            </div>
+                            <div class="text-right">
+                                <button type="submit" class="btn-primary font-bold w-full md:w-auto py-3 px-6 rounded-lg shadow-md">
+                                    <i class="fas fa-plus mr-2"></i>Adicionar Gasto
+                                </button>
+                            </div>
+                        </form>
                     </div>
                     <div>
-                        <label for="value" class="block text-sm font-medium text-gray-600 mb-1">Valor (R$)</label>
-                        <input type="text" inputmode="decimal" id="value" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="R$ 0,00" required>
+                         <h2 class="text-2xl font-bold text-gray-700 mb-6">Meus Gastos</h2>
+                        <div id="expenses-list" class="space-y-4">
+                             <p id="empty-expenses" class="text-center text-gray-500 py-8 hidden">Nenhum gasto encontrado.</p>
+                        </div>
                     </div>
-                    <div class="md:col-span-2">
-                        <label for="date-time" class="block text-sm font-medium text-gray-600 mb-1">Data e Hora</label>
-                        <input type="datetime-local" id="date-time" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" required>
-                    </div>
-                    <div class="md:col-span-2 text-right">
-                        <button type="submit" class="btn-primary font-bold w-full md:w-auto py-3 px-6 rounded-lg shadow-md">
-                            <i class="fas fa-plus mr-2"></i>Adicionar
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Appointments List -->
-            <div>
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                     <h2 class="text-2xl font-bold text-gray-700">Meus Agendamentos</h2>
-                     <div class="w-full sm:w-auto">
-                        <label for="month-filter" class="sr-only">Filtrar por Mês</label>
-                        <select id="month-filter" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500">
-                            <option value="all">Todos os Meses</option>
-                        </select>
-                     </div>
-                </div>
-               
-                <div id="appointments-list" class="space-y-4">
-                    <!-- Empty state -->
-                    <p id="empty-state" class="text-center text-gray-500 py-8 hidden">Nenhum agendamento encontrado.</p>
-                </div>
+                </section>
             </div>
         </div>
     </div>
@@ -175,7 +252,7 @@
     <div id="delete-modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden opacity-0">
         <div class="modal-container bg-white w-full max-w-md p-6 rounded-xl shadow-lg transform scale-95">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Confirmar Exclusão</h3>
-            <p class="text-gray-600 mb-6">Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.</p>
+            <p id="delete-modal-text" class="text-gray-600 mb-6"></p>
             <div class="flex justify-end space-x-4">
                 <button id="cancel-delete-btn" class="py-2 px-5 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold">Cancelar</button>
                 <button id="confirm-delete-btn" class="btn-danger py-2 px-5 rounded-lg font-semibold">Excluir</button>
@@ -183,247 +260,6 @@
         </div>
     </div>
 
-    <!-- Lógica do App com LocalStorage -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- LOGIN ELEMENTS ---
-            const loginPage = document.getElementById('login-page');
-            const appPage = document.getElementById('app-page');
-            const loginForm = document.getElementById('login-form');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const loginError = document.getElementById('login-error');
-
-            // --- APP ELEMENTS ---
-            let appointmentIdToDelete = null;
-            let allAppointments = [];
-            let selectedFilter = 'all';
-
-            const form = document.getElementById('add-appointment-form');
-            const appointmentsList = document.getElementById('appointments-list');
-            const emptyState = document.getElementById('empty-state');
-            const totalPaidEl = document.getElementById('total-paid');
-            const totalUnpaidEl = document.getElementById('total-unpaid');
-            const valueInput = document.getElementById('value');
-            const deleteModal = document.getElementById('delete-modal');
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
-            const monthFilter = document.getElementById('month-filter');
-
-            // --- LOGIN LOGIC ---
-            function showApp() {
-                loginPage.classList.add('hidden');
-                appPage.classList.remove('hidden');
-                document.body.classList.remove('flex', 'items-center', 'justify-center');
-                loadInitialData(); // Carrega os dados do app após o login
-            }
-
-            function showLogin() {
-                loginPage.classList.remove('hidden');
-                appPage.classList.add('hidden');
-                document.body.classList.add('flex', 'items-center', 'justify-center');
-            }
-
-            loginForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const username = usernameInput.value;
-                const password = passwordInput.value;
-
-                if (username === 'Dry2510' && password === '2510Dry') {
-                    sessionStorage.setItem('isLoggedIn', 'false');
-                    loginError.classList.add('hidden');
-                    showApp();
-                } else {
-                    loginError.classList.remove('hidden');
-                    passwordInput.value = '';
-                }
-            });
-            
-            // Checa se o usuário já está logado na sessão
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                showApp();
-            } else {
-                showLogin();
-            }
-
-            // --- DATA HANDLING FUNCTIONS (USING LOCALSTORAGE) ---
-            function getAppointments() {
-                const appointmentsJSON = localStorage.getItem('nailAppointments');
-                const appointments = appointmentsJSON ? JSON.parse(appointmentsJSON) : [];
-                return appointments.sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
-            }
-
-            function saveAppointments(appointments) {
-                localStorage.setItem('nailAppointments', JSON.stringify(appointments));
-            }
-
-            function loadInitialData() {
-                allAppointments = getAppointments();
-                populateMonthFilter();
-                filterAndRender();
-            }
-
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const clientName = document.getElementById('client-name').value.trim();
-                const service = document.getElementById('service').value.trim();
-                const rawValue = valueInput.value;
-                const dateTime = document.getElementById('date-time').value;
-                const value = parseFloat(rawValue.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-
-                if (clientName && service && !isNaN(value) && dateTime) {
-                    const newAppointment = {
-                        id: crypto.randomUUID(),
-                        clientName, service, value, dateTime,
-                        isPaid: false,
-                        createdAt: new Date().toISOString()
-                    };
-                    const updatedAppointments = [newAppointment, ...getAppointments()];
-                    saveAppointments(updatedAppointments);
-                    form.reset();
-                    valueInput.value = '';
-                    loadInitialData();
-                }
-            });
-
-            function markAsPaid(id) {
-                const appointments = getAppointments();
-                const appointmentIndex = appointments.findIndex(a => a.id === id);
-                if (appointmentIndex > -1) {
-                    appointments[appointmentIndex].isPaid = true;
-                    saveAppointments(appointments);
-                    loadInitialData();
-                }
-            }
-
-            function deleteAppointment(id) {
-                let appointments = getAppointments();
-                appointments = appointments.filter(a => a.id !== id);
-                saveAppointments(appointments);
-                loadInitialData();
-            }
-
-            // --- UI RENDERING & EVENT LISTENERS ---
-            function filterAndRender() {
-                let filteredAppointments = allAppointments;
-                if (selectedFilter !== 'all') {
-                    filteredAppointments = allAppointments.filter(appt => {
-                        const apptDate = new Date(appt.dateTime);
-                        const apptMonthYear = `${apptDate.getFullYear()}-${String(apptDate.getMonth() + 1).padStart(2, '0')}`;
-                        return apptMonthYear === selectedFilter;
-                    });
-                }
-                renderAppointments(filteredAppointments);
-                updateSummary(filteredAppointments);
-            }
-
-            function populateMonthFilter() {
-                const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-                const uniqueMonths = [...new Set(allAppointments.map(appt => {
-                    const date = new Date(appt.dateTime);
-                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                }))];
-                monthFilter.innerHTML = '<option value="all">Todos os Meses</option>';
-                uniqueMonths.forEach(monthYear => {
-                    const [year, month] = monthYear.split('-');
-                    const option = document.createElement('option');
-                    option.value = monthYear;
-                    option.textContent = `${monthNames[parseInt(month) - 1]} de ${year}`;
-                    monthFilter.appendChild(option);
-                });
-                monthFilter.value = selectedFilter;
-            }
-
-            function renderAppointments(appointments) {
-                appointmentsList.innerHTML = '';
-                if (appointments.length === 0) {
-                    emptyState.classList.remove('hidden');
-                } else {
-                    emptyState.classList.add('hidden');
-                }
-                appointments.forEach(appt => {
-                    const card = createAppointmentCard(appt);
-                    appointmentsList.appendChild(card);
-                });
-            }
-
-            function createAppointmentCard(appt) {
-                const card = document.createElement('div');
-                card.className = `card p-5 ${appt.isPaid ? 'paid-card' : 'unpaid-card'}`;
-                const formattedDate = new Date(appt.dateTime).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-                const formattedValue = appt.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-                card.innerHTML = `
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div class="flex-1">
-                            <p class="font-bold text-lg text-pink-700">${appt.clientName}</p>
-                            <p class="text-gray-600">${appt.service}</p>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-center text-sm text-gray-500 mt-2 gap-x-2">
-                                <span class="flex items-center"><i class="fas fa-calendar-alt mr-2"></i>${formattedDate}</span>
-                                <span class="hidden sm:inline">|</span>
-                                <span class="flex items-center"><i class="fas fa-money-bill-wave mr-2"></i>${formattedValue}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3 w-full md:w-auto">
-                            ${!appt.isPaid ? `<button data-id="${appt.id}" class="btn-secondary font-semibold py-2 px-4 rounded-lg flex-1 md:flex-none mark-paid-btn"><i class="fas fa-check mr-2"></i>Marcar Pago</button>` : `<span class="font-bold text-green-600 text-center flex-1"><i class="fas fa-check-circle mr-2"></i>Pago</span>`}
-                            <button data-id="${appt.id}" class="text-red-500 hover:text-red-700 py-2 px-4 rounded-lg delete-btn"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </div>
-                `;
-                
-                const markPaidBtn = card.querySelector('.mark-paid-btn');
-                if (markPaidBtn) markPaidBtn.addEventListener('click', () => markAsPaid(appt.id));
-                
-                const deleteBtn = card.querySelector('.delete-btn');
-                if (deleteBtn) deleteBtn.addEventListener('click', () => showDeleteModal(appt.id));
-                
-                return card;
-            }
-
-            function updateSummary(appointments) {
-                const paidTotal = appointments.filter(a => a.isPaid).reduce((sum, a) => sum + a.value, 0);
-                const unpaidTotal = appointments.filter(a => !a.isPaid).reduce((sum, a) => sum + a.value, 0);
-                totalPaidEl.textContent = paidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                totalUnpaidEl.textContent = unpaidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            }
-            
-            valueInput.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value === '') { e.target.value = ''; return; }
-                value = (parseInt(value, 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                e.target.value = 'R$ ' + value;
-            });
-
-            monthFilter.addEventListener('change', (e) => {
-                selectedFilter = e.target.value;
-                filterAndRender();
-            });
-
-            function showDeleteModal(id) {
-                appointmentIdToDelete = id;
-                deleteModal.classList.remove('hidden');
-                setTimeout(() => {
-                    deleteModal.classList.remove('opacity-0');
-                    deleteModal.querySelector('.modal-container').classList.remove('scale-95');
-                }, 10);
-            }
-
-            function hideDeleteModal() {
-                deleteModal.querySelector('.modal-container').classList.add('scale-95');
-                deleteModal.classList.add('opacity-0');
-                setTimeout(() => {
-                    deleteModal.classList.add('hidden');
-                    appointmentIdToDelete = null;
-                }, 300);
-            }
-
-            cancelDeleteBtn.addEventListener('click', hideDeleteModal);
-            
-            confirmDeleteBtn.addEventListener('click', () => {
-                if (appointmentIdToDelete) deleteAppointment(appointmentIdToDelete);
-                hideDeleteModal();
-            });
-        });
-    </script>
 </body>
+<script src="script.js"></script>
 </html>
