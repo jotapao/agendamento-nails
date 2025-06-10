@@ -16,3 +16,20 @@
         let appointmentIdToDelete = null;
         let allAppointments = [];
         let selectedFilter = 'all';
+
+         // --- DOM ELEMENTS ---
+
+         const form = document.getElementById('add-appointment-form');
+        const appointmentsList = document.getElementById('appointments-list');
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+        const totalPaidEl = document.getElementById('total-paid');
+        const totalUnpaidEl = document.getElementById('total-unpaid');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const userInfoDiv = document.getElementById('user-info');
+        const valueInput = document.getElementById('value');
+        const deleteModal = document.getElementById('delete-modal');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        const monthFilter = document.getElementById('month-filter');
+
