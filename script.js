@@ -7,3 +7,12 @@
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-nail-app';
+
+         // --- GLOBAL STATE ---
+        let app, auth, db, userId;
+        let isAuthReady = false;
+        let appointmentsCollection;
+        let unsubscribeAppointments = null;
+        let appointmentIdToDelete = null;
+        let allAppointments = [];
+        let selectedFilter = 'all';
