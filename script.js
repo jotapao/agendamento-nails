@@ -1,5 +1,5 @@
 
-               document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             // --- LOGIN ELEMENTS ---
             const loginPage = document.getElementById('login-page');
             const appPage = document.getElementById('app-page');
@@ -14,12 +14,24 @@
             let allExpenses = [];
             let currentFilterType = 'all';
 
+            // Service Options
+            const services = [
+                "Unha em Gel",
+                "Esmaltação em Gel",
+                "Fibra",
+                "Mão",
+                "Pé",
+                "Pé e Mão",
+                "Alongamento",
+                "Outro" // Permite flexibilidade
+            ];
+
             // Appointments
             const addAppointmentForm = document.getElementById('add-appointment-form');
             const appointmentsList = document.getElementById('appointments-list');
             const emptyAppointmentsEl = document.getElementById('empty-appointments');
             const clientNameInput = document.getElementById('client-name');
-            const serviceInput = document.getElementById('service');
+            const serviceSelect = document.getElementById('service-select');
             const valueInput = document.getElementById('value');
             const dateTimeInput = document.getElementById('date-time');
 
@@ -32,6 +44,7 @@
             const expenseDateInput = document.getElementById('expense-date');
 
             // Summary
+            const netBalanceEl = document.getElementById('net-balance');
             const totalPaidEl = document.getElementById('total-paid');
             const totalUnpaidEl = document.getElementById('total-unpaid');
             const periodExpensesEl = document.getElementById('period-expenses');
@@ -55,11 +68,17 @@
             const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
             const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
             
+            // --- INITIALIZATION ---
+            function populateServiceSelect() {
+                serviceSelect.innerHTML = services.map(service => `<option value="${service}">${service}</option>`).join('');
+            }
+
             // --- LOGIN LOGIC ---
             function showApp() {
                 loginPage.classList.add('hidden');
                 appPage.classList.remove('hidden');
                 document.body.classList.remove('flex', 'items-center', 'justify-center', 'h-full');
+                populateServiceSelect();
                 loadInitialData();
             }
 
@@ -108,8 +127,8 @@
             addAppointmentForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const value = parseFloat(valueInput.value.replace('R$', '').replace(/\./g, '').replace(',', '.').trim());
-                if (clientNameInput.value && serviceInput.value && !isNaN(value) && dateTimeInput.value) {
-                    saveAppointments([{ id: crypto.randomUUID(), clientName: clientNameInput.value.trim(), service: serviceInput.value.trim(), value, dateTime: dateTimeInput.value, isPaid: false, createdAt: new Date().toISOString() }, ...getAppointments()]);
+                if (clientNameInput.value && serviceSelect.value && !isNaN(value) && dateTimeInput.value) {
+                    saveAppointments([{ id: crypto.randomUUID(), clientName: clientNameInput.value.trim(), service: serviceSelect.value, value, dateTime: dateTimeInput.value, isPaid: false, createdAt: new Date().toISOString() }, ...getAppointments()]);
                     addAppointmentForm.reset();
                     valueInput.value = '';
                     loadInitialData();
@@ -277,6 +296,13 @@
                 const paidTotal = appointments.filter(a => a.isPaid).reduce((sum, a) => sum + a.value, 0);
                 const unpaidTotal = appointments.filter(a => !a.isPaid).reduce((sum, a) => sum + a.value, 0);
                 const expensesTotal = expenses.reduce((sum, e) => sum + e.value, 0);
+                const netBalance = (paidTotal + unpaidTotal) - expensesTotal;
+
+                netBalanceEl.textContent = netBalance.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                netBalanceEl.classList.remove('text-green-600', 'text-red-600', 'text-blue-500');
+                if (netBalance > 0) netBalanceEl.classList.add('text-green-600');
+                else if (netBalance < 0) netBalanceEl.classList.add('text-red-600');
+                else netBalanceEl.classList.add('text-blue-500');
 
                 totalPaidEl.textContent = paidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                 totalUnpaidEl.textContent = unpaidTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

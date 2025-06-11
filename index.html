@@ -114,7 +114,14 @@
             </header>
 
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card p-6 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500">Saldo Líquido (Período)</p>
+                        <p id="net-balance" class="text-2xl sm:text-3xl font-bold">R$ 0,00</p>
+                    </div>
+                     <i class="fas fa-scale-balanced fa-2x text-blue-500"></i>
+                </div>
                 <div class="card p-6 flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500">Arrecadado (Período)</p>
@@ -180,8 +187,10 @@
                                 <input type="text" id="client-name" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Maria da Silva" required>
                             </div>
                             <div>
-                                <label for="service" class="block text-sm font-medium text-gray-600 mb-1">Serviço</label>
-                                <input type="text" id="service" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" placeholder="Ex: Manicure e Pedicure" required>
+                                <label for="service-select" class="block text-sm font-medium text-gray-600 mb-1">Serviço</label>
+                                <select id="service-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500" required>
+                                    <!-- Opções de serviço serão adicionadas via JS -->
+                                </select>
                             </div>
                             <div>
                                 <label for="value" class="block text-sm font-medium text-gray-600 mb-1">Valor (R$)</label>
@@ -253,6 +262,6 @@
         </div>
     </div>
 
+  <script src="script.js"></script>
 </body>
-<script src="script.js"></script>
 </html>
